@@ -80,6 +80,7 @@ public final class Definition<T, U>: DefinitionType {
   let scope: ComponentScope
   var weakFactory: ((Any) throws -> Any)!
   var resolveProperties: ((DependencyContainer, Any) throws -> ())?
+  var autoInjectProperties: Bool?
   
   init(scope: ComponentScope, factory: @escaping F) {
     self.factory = factory
@@ -125,6 +126,18 @@ public final class Definition<T, U>: DefinitionType {
     return self
   }
 
+  /**
+   Whether container should perform properties auto-injection when resolving using this definition.
+   If called will override container configuration. Can be called together with `resolvingProperties`
+   to resolve properties that are not automatically injected.
+
+   - parameter shouldAutoInject: Whether container should perform properties auto-injection when resolving using this definition. Default is `true`.
+  */
+  @discardableResult public func autoInjectingProperties(_ shouldAutoInject: Bool = true) -> Definition {
+    autoInjectProperties = shouldAutoInject
+    return self
+  }
+
   /// Calls `resolveDependencies` block if it was set.
   func resolveProperties(of instance: Any, container: DependencyContainer) throws {
     guard let resolvedInstance = instance as? T else { return }
@@ -144,7 +157,7 @@ public final class Definition<T, U>: DefinitionType {
   //MARK: - TypeForwardingDefinition
   
   /// Types that can be resolved using this definition.
-  private(set) var implementingTypes: [Any.Type] = [(T?).self, (T!).self]
+  private(set) var implementingTypes: [Any.Type] = [(T?).self]
   
   /// Return `true` if type can be resolved using this definition
   func doesImplements(type aType: Any.Type) -> Bool {
@@ -204,6 +217,7 @@ protocol _Definition: AutoWiringDefinition, TypeForwardingDefinition {
   var weakFactory: ((Any) throws -> Any)! { get }
   func resolveProperties(of instance: Any, container: DependencyContainer) throws
   var container: DependencyContainer? { get set }
+  var autoInjectProperties: Bool? { get }
 }
 
 //MARK: - Type Forwarding
