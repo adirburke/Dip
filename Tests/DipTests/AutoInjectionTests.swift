@@ -26,7 +26,7 @@ import XCTest
 @testable import Dip
 
 private protocol Server: class {
-  weak var client: Client! {get}
+  var client: Client! {get}
   var anotherClient: Client! {get set}
 }
 
@@ -47,7 +47,7 @@ private class ServerImp: Server {
   
   weak var anotherClient: Client!
   
-  weak var _optionalProperty = InjectedWeak<AnyObject>(required: false)
+  var _optionalProperty = InjectedWeak<AnyObject>(required: false)
 }
 
 private class ClientImp: Client {
@@ -109,7 +109,10 @@ class AutoInjectionTests: XCTestCase {
       ("testThatItResolvesTaggedAutoInjectedProperties", testThatItResolvesTaggedAutoInjectedProperties),
       ("testThatItPassesTagToAutoInjectedProperty", testThatItPassesTagToAutoInjectedProperty),
       ("testThatItDoesNotPassTagToAutoInjectedPropertyWithExplicitTag", testThatItDoesNotPassTagToAutoInjectedPropertyWithExplicitTag),
-      ("testThatItAutoInjectsPropertyWithCollaboratingContainer", testThatItAutoInjectsPropertyWithCollaboratingContainer)
+      ("testThatItAutoInjectsPropertyWithCollaboratingContainer", testThatItAutoInjectsPropertyWithCollaboratingContainer),
+      ("testThatItDoesNotAutoInjectIfDisabled", testThatItDoesNotAutoInjectIfDisabledInDefinition),
+      ("testThatItDoesNotAutoInjectIfDisabledInContainer", testThatItDoesNotAutoInjectIfDisabledInContainer),
+      ("testThatItAutoInjectsWhenOverridenInDefinition", testThatItAutoInjectsWhenOverridenInDefinition),
     ]
   }()
 
@@ -372,6 +375,41 @@ class AutoInjectionTests: XCTestCase {
     let server = client.server
     XCTAssertTrue(client === server?.client)
   }
-  
+
+  func testThatItDoesNotAutoInjectIfDisabledInDefinition() {
+    container.register { ServerImp() as Server }
+    container.register { ClientImp() as Client }
+      .autoInjectingProperties(false)
+
+    let client = try! container.resolve() as Client
+    let server = client.server
+
+    XCTAssertNil(server)
+  }
+
+  func testThatItDoesNotAutoInjectIfDisabledInContainer() {
+    let container = DependencyContainer(autoInjectProperties: false)
+    container.register { ServerImp() as Server }
+    container.register { ClientImp() as Client }
+
+    let client = try! container.resolve() as Client
+    let server = client.server
+
+    XCTAssertNil(server)
+  }
+
+  func testThatItAutoInjectsWhenOverridenInDefinition() {
+    let container = DependencyContainer(autoInjectProperties: false)
+    container.register { ServerImp() as Server }
+    container.register { ClientImp() as Client }
+      .autoInjectingProperties(true)
+
+    let client = try! container.resolve() as Client
+    let server = client.server
+
+    XCTAssertNotNil(server)
+    XCTAssertNil(server?.client)
+  }
+
 }
 
