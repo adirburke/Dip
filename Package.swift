@@ -12,13 +12,3 @@ let package = Package(
         .testTarget(name: "DipTests", dependencies: ["Dip"], path: "Tests"),
     ]
 )
-
- let package = Package(
-	 name: "Dip",
-	products: [
-		.library(name: "Dip", targets: ["Dip"])
-	],
-	targets: [
-		.target(name: "Dip", dependencies: [], path: "./Sources"),
-	]
-)	
