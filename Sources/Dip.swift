@@ -40,6 +40,7 @@ public final class DependencyContainer {
   }
 
   var autoInjectProperties: Bool
+  var threadSafe: Bool
   internal(set) public var context: Context!
   var definitions = [DefinitionKey: _Definition]()
   var resolvedInstances = ResolvedInstances()
@@ -63,6 +64,7 @@ public final class DependencyContainer {
 
    - Parameters:
      - autoInjectProperties: Whether container should perform properties auto-injection. Default is `true`.
+     - threadSafe: Whether container should be thread-safe. Default is `true`. You may want to disable it for better performance.
      - configBlock: A configuration block in which you typically put all you `register` calls.
    
    - note: The `configBlock` is simply called at the end of the `init` to let you configure everything. 
@@ -82,8 +84,9 @@ public final class DependencyContainer {
    
    - returns: A new DependencyContainer.
    */
-  public init(autoInjectProperties: Bool = true, configBlock: (DependencyContainer)->() = { _ in }) {
+  public init(autoInjectProperties: Bool = true, threadSafe: Bool = true, configBlock: (DependencyContainer)->() = { _ in }) {
     self.autoInjectProperties = autoInjectProperties
+    self.threadSafe = threadSafe
     configBlock(self)
   }
   
@@ -91,7 +94,7 @@ public final class DependencyContainer {
    Call this method to complete container setup. After container is bootstrapped
    you can not add or remove definitions. Trying to do so will cause runtime exception.
    You can completely reset container, after reset you can bootstrap it again. 
-   During bootsrap container will instantiate components registered with `EagerSingleton` scope.
+   During bootstrap container will instantiate components registered with `EagerSingleton` scope.
    
    - throws: `DipError` if failed to instantiate any component
   */
@@ -104,6 +107,10 @@ public final class DependencyContainer {
   }
 
   func threadSafe<T>(_ closure: () throws -> T) rethrows -> T {
+    guard threadSafe else {
+      return try closure()
+    }
+
     lock.lock()
     defer { lock.unlock() }
     return try closure()
@@ -291,7 +298,7 @@ extension DependencyContainer {
     for collaborator in _collaborators {
       //if container is already in a context resolving this type
       //it means that it has been already called to resolve this type,
-      //so there is probably a cercular reference between containers.
+      //so there is probably a circular reference between containers.
       //To break it skip this container
       if let context = collaborator.context, context.resolvingType == key.type && context.tag == key.tag { continue }
       
@@ -446,7 +453,7 @@ extension DependencyContainer: CustomStringConvertible {
 //MARK: - DependencyTagConvertible
 
 /// Implement this protocol on your type if you want to use its instances as `DependencyContainer`'s tags.
-/// `DependencyContainer.Tag`, `String`, `Int` and any `RawRepresentable` with `RawType` of `String` or `Int` by default confrom to this protocol.
+/// `DependencyContainer.Tag`, `String`, `Int` and any `RawRepresentable` with `RawType` of `String` or `Int` by default conform to this protocol.
 public protocol DependencyTagConvertible {
   var dependencyTag: DependencyContainer.Tag { get }
 }

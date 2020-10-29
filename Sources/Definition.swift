@@ -34,12 +34,14 @@ public struct DefinitionKey: Hashable, CustomStringConvertible {
     self.tag = tag
   }
   
-  public var hashValue: Int {
-    return "\(type)-\(typeOfArguments)-\(tag.desc)".hashValue
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(ObjectIdentifier(type))
+    hasher.combine(ObjectIdentifier(typeOfArguments))
+    hasher.combine(tag.desc)
   }
   
   public var description: String {
-    return "type: \(type), arguments: \(typeOfArguments), tag: \(tag.desc)"
+    return "type: \(String(reflecting: type)), arguments: \(typeOfArguments), tag: \(tag.desc)"
   }
   
   func tagged(with tag: DependencyContainer.Tag?) -> DefinitionKey {
@@ -53,13 +55,13 @@ public struct DefinitionKey: Hashable, CustomStringConvertible {
     return
       lhs.type == rhs.type &&
       lhs.typeOfArguments == rhs.typeOfArguments &&
-      lhs.tag == rhs.tag
+      lhs.tag.desc == rhs.tag.desc
   }
   
 }
 
 ///Dummy protocol to store definitions for different types in collection
-public protocol DefinitionType: class { }
+public protocol DefinitionType: AnyObject { }
 
 /**
  `Definition<T, U>` describes how instances of type `T` should be created when this type is resolved by the `DependencyContainer`.
@@ -204,7 +206,7 @@ public final class Definition<T, U>: DefinitionType {
         
         //definitions for types that can be resolved by `forwardsTo` definition
         //can also be used to resolve self type and it's implementing types
-        //this way container properly reuses previosly resolved instances
+        //this way container properly reuses previously resolved instances
         //when there are several forwarded definitions
         //see testThatItReusesInstanceResolvedByTypeForwarding)
         for definition in forwardsTo.forwardsFrom {
@@ -290,7 +292,7 @@ class DefinitionBuilder<T, U> {
 
 typealias KeyDefinitionPair = (key: DefinitionKey, definition: _Definition)
 
-/// Definitions are matched if they are registered for the same tag and thier factories accept the same number of runtime arguments.
+/// Definitions are matched if they are registered for the same tag and their factories accept the same number of runtime arguments.
 private func ~=(lhs: KeyDefinitionPair, rhs: KeyDefinitionPair) -> Bool {
   guard lhs.key.type == rhs.key.type else { return false }
   guard lhs.key.tag == rhs.key.tag else { return false }
@@ -298,9 +300,9 @@ private func ~=(lhs: KeyDefinitionPair, rhs: KeyDefinitionPair) -> Bool {
   return true
 }
 
-/// Returns key-defintion pairs with definitions able to resolve that type (directly or via type forwarding)
+/// Returns key-definition pairs with definitions able to resolve that type (directly or via type forwarding)
 /// and which tag matches provided key's tag or is nil if strictByTag is false.
-/// In the end filters defintions by type of runtime arguments.
+/// In the end filters definitions by type of runtime arguments.
 func filter(definitions _definitions: [KeyDefinitionPair], byKey key: DefinitionKey, strictByTag: Bool = false, byTypeOfArguments: Bool = false) -> [KeyDefinitionPair] {
   let definitions = _definitions
     .filter({ $0.key.type == key.type || $0.definition.doesImplements(type: key.type) })

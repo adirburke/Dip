@@ -81,7 +81,7 @@ extension DependencyContainer {
    
    - parameters:
       - tag: The arbitrary tag to use to lookup definition.
-      - builder: Generic closure that accepts generic factory and returns inctance created by that factory.
+      - builder: Generic closure that accepts generic factory and returns instance created by that factory.
    
    - throws: `DipError.DefinitionNotFound`, `DipError.AutoInjectionFailed`, `DipError.AmbiguousDefinitions`, `DipError.InvalidType`
    
@@ -183,7 +183,7 @@ extension DependencyContainer {
       return previouslyResolved
     }
     
-    log(level: .Verbose, context)
+    if let context = context { log(level: .Verbose, context) }
     var resolvedInstance = try builder(definition)
     
     /*
