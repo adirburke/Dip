@@ -25,12 +25,12 @@
 import XCTest
 @testable import Dip
 
-private protocol Server: class {
+private protocol Server: AnyObject {
   var client: Client! {get}
   var anotherClient: Client! {get set}
 }
 
-private protocol Client: class {
+private protocol Client: AnyObject {
   var server: Server? {get}
   var anotherServer: Server! {get set}
 }
@@ -488,7 +488,7 @@ class AutoInjectionTests: XCTestCase {
     XCTAssertNil(server)
   }
 
-  func testThatItAutoInjectsWhenOverridenInDefinition() {
+  func testThatItAutoInjectsWhenOverriddenInDefinition() {
     let container = DependencyContainer(autoInjectProperties: false)
     container.register { ServerImp() as Server }
     container.register { ClientImp() as Client }

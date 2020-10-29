@@ -25,8 +25,8 @@
 import XCTest
 @testable import Dip
 
-private protocol Service: class { }
-private protocol ForwardedType: class { }
+private protocol Service: AnyObject { }
+private protocol ForwardedType: AnyObject { }
 #if os(Linux)
 private class ServiceImp1: Service, ForwardedType { }
 private class ServiceImp2: Service, ForwardedType { }
@@ -136,7 +136,7 @@ class TypeForwardingTests: XCTestCase {
         resolveDependenciesCalled = true
 
         //when
-        //resolving via type-forawrding for tag different then tag for original definition
+        //resolving via type-forwarding for tag different then tag for original definition
         let forwardType = try container.resolve(tag: "tag") as ForwardedType
         let anyForwardType = try container.resolve(ForwardedType.self, tag: "tag") as! ForwardedType
 

@@ -25,7 +25,7 @@
 import XCTest
 @testable import Dip
 
-private protocol Service: class {}
+private protocol Service: AnyObject {}
 private class ServiceImp1: Service {}
 private class ServiceImp2: Service {}
 
@@ -316,7 +316,7 @@ class ComponentScopeTests: XCTestCase {
     container.register(service, type: Service.self)
     
     //when
-    //resolve and realease reight away
+    //resolve and release right away
     _ = try? container.resolve() as ServiceImp1
     
     //then
